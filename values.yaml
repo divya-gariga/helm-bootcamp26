@@ -1,0 +1,61 @@
+namespace: bc26-app
+services:
+  - tier: frontend
+    name: bc26-frontend-service
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+    selector: bc26-frontend
+  - tier: api
+    name: bc26-api-service
+    type: ClusterIP
+    port: 8090
+    targetPort: 8090
+    selector: bc26-api
+  - tier: db
+    name: bc26-mysql-service
+    type: ClusterIP
+    port: 3306
+    targetPort: 3306
+    selector: bc26-mysql
+deployments:
+  - tier: db
+    name: bc26-mysql
+    kind: Deployment
+    replicas: 1
+    matchLabels: bc26-mysql
+    podName: bc26-mysql
+    containerName: db-img
+    secrets: regcred
+    image: ghcr.io/divya-gariga/bootcamp-26-db
+    port: 3306
+    env:
+      - name: MYSQL_ROOT_PASSWORD
+        value: root
+  - tier: api
+    name: bc26-api-deploy
+    kind: Deployment
+    replicas: 1
+    matchLabels: bc26-api
+    podName: bc26-api
+    containerName: backend-img
+    image: ghcr.io/divya-gariga/bootcamp-26-backend
+    port: 8090
+    secrets: regcred
+    env:
+      - name: SPRING_DATASOURCE_URL
+        value: "jdbc:mysql://{{ $.Release.Name}}-bc26-mysql-service:3306/book_discovery"
+      - name: SPRING_DATASOURCE_USERNAME
+        value: root
+      - name: SPRING_DATASOURCE_PASSWORD
+        value: root
+  - tier: frontend
+    name: bc26-frontend-deploy
+    kind: Deployment
+    replicas: 1
+    matchLabels: bc26-frontend
+    podName: bc26-frontend
+    containerName: frontend-img
+    image: ghcr.io/divya-gariga/bc26-fe
+    port: 3000
+    secrets: regcred

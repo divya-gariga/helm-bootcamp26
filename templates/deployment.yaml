@@ -1,0 +1,35 @@
+{{- range .Values.deployments }}
+apiVersion: apps/v1
+kind: {{ .kind }}
+metadata:
+  name: {{ $.Release.Name }}-{{ .name }}
+  labels:
+    name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      name: {{ .matchLabels }}
+  template:
+    metadata:
+      name: {{ .podName }}
+      labels:
+        name: {{ .podName }}
+    spec:
+      containers:
+        - name: {{ .containerName }}
+          image: {{ .image}}
+          ports:
+            - containerPort: {{ .port }}
+          {{- if or ( eq .tier "api" ) ( eq .tier "db")}}
+          env:
+            {{- range .env}}
+            - name: {{ .name }}
+              value: {{  tpl .value $ }}
+            {{- end }}
+          {{- end }}
+      imagePullSecrets:
+        - name: {{ .secrets }}
+---
+{{- end }}
